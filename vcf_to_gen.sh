@@ -20,5 +20,19 @@ do
 
     done<Amanda.mapping.$chr
 
+##### OR if sig diff between mapping and gen files:
+   while read line; do
+
+        echo $line
+
+        old=$(echo $line | awk '{print $2}')
+        new=$(grep $old Laura.mapping.$chr | awk '{print $2}' | head -1)
+
+        sed -i "s/$old/$new/1" Laura.$chr.gen
+
+    done<Laura.$chr.gen
+
+
+
 done
 
