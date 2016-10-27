@@ -1,0 +1,23 @@
+awk -v i=$col 'NR>1 {print $1}' $gene.snpdat > ids # make a snplist
+
+N=$(wc -l $gene.ld | awk '{print $1}')
+
+for col in {1..$N}; do echo $col; awk -v i=$col 'NR>i && ($i>0.98 ||  $i<-0.98) {print i,NR}' $gene.ld >> ids; done # get all ld pairs
+
+### Remove any pairs for whcih one of the snps has failing alleles
+awk 'length($3)>1 || length($4)>1 || $3=="I" || $3=="D" || ($3=="A" && $4=="T") || ($3=="T" && $4=="A") || ($3=="C" && $4=="G") || ($3=="G" && $4=="C") {print $1}' $file/$gene.snpdat > $file/allelermlist
+
+fgrep -wnrf $gene.ld/allelermlist $gene.ld/snpids | awk -F ':' '{print $1}' | fgrep -wvf - $gene.ld/ids2 | awk '$1!=$2' > $gene.ld/ids2_qcd
+
+# Next: choose one of each pair at random, remove any pairs with this remove snp in, iterate until length of list = 0
+
+awk '{print $1}' ids_qcd | head -1 > rmids
+Npairs=$(fgrep -wvf rmids ids_qcd | wc -l)
+
+
+while [ $Npairs -ge 10 ]
+do
+    fgrep -wvf rmids ids_qcd | awk 'NR==1 {print $1}' >> rmids
+    Npairs=$(fgrep -wvf rmids ids_qcd | wc -l)
+    echo $Npairs
+done
